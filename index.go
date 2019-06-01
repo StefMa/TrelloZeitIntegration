@@ -37,7 +37,8 @@ type trelloList struct {
 }
 
 type trelloCard struct {
-  Name string `json:"name"`
+  Name string     `json:"name"`
+  ShortUrl string `json:"shortUrl"`
 }
 
 type metadata struct {
@@ -131,7 +132,7 @@ func buildOutputForTrelloBoards(boards []trelloBoard) (output string) {
   output = "<Page>"
   output += "<H2>Your Trello boards</H2>"
   for _, board := range boards {
-    output += "<Link action=\"" + ACTION_USE_TRELLO_BOARD + board.Id + "\">" + board.Name + "</Link><BR/>"
+    output += "<Link action=\"" + ACTION_USE_TRELLO_BOARD + board.Id + "\" target=\"_blank\">" + board.Name + "</Link><BR/>"
   }
   output += "<BR/>"
   output += "<H2>Or create a new one</H2>"
@@ -146,7 +147,7 @@ func buildOutputForTrelloLists(lists []trelloList) (output string) {
   for _, list := range lists {
     output += "<H2>" + list.Name + "</H2>"
     for _, card := range list.Cards {
-      output += card.Name + "<BR/>"
+      output += "<Link href=\"" + card.ShortUrl + "\">" + card.Name + "</Link><BR/>"
     }
   }
   output += "</Page>"
@@ -213,7 +214,7 @@ func getTrelloBoardsByUsername(username string, authKey string) (boards []trello
 
 
 func getTrelloListsFromBoardId(boardId string, authKey string) (lists []trelloList) {
-  response, err := http.Get("https://api.trello.com/1/boards/" + boardId + "/lists?cards=all&key=" + TRELLO_API_KEY + "&token=" + authKey)
+  response, err := http.Get("https://api.trello.com/1/boards/" + boardId + "/lists?cards=all&card_fields=name,shortUrl&key=" + TRELLO_API_KEY + "&token=" + authKey)
   if err != nil {
     // TODO: Handle error
   }
