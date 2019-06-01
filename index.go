@@ -24,7 +24,7 @@ const ACTION_USE_TRELLO_BOARD = "useTrelloBoard"
 
 const CLIENT_STATE_AUTH_KEY = "authKey"
 const CLIENT_STATE_TRELLO_USERNAME = "trelloUsername"
-const CLIENT_STATE_TRELLO_BOARD_ID = "trelloBoardId"
+const CLIENT_STATE_TRELLO_BOARD_NAME = "trelloBoardName"
 
 type trelloBoard struct {
   Id string   `json:"id"`
@@ -88,8 +88,6 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     // Save the authKey
     var jsonStr = "{\"authKey\":\"" + authKey + "\", \"username\":\"" + username + "\"}"
     saveMetadata(configurationId, token, jsonStr)
-    // Create the new board...
-    //board := createNewTrelloBoard(authKey)
     // Return the HTML code
     fmt.Fprint(w, buildOutputForSavingAuthKey())
     return
@@ -97,6 +95,13 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
 
   if (strings.HasPrefix(action, ACTION_USE_TRELLO_BOARD) && metadata.AuthKey != "") {
     boardId := strings.TrimPrefix(action, ACTION_USE_TRELLO_BOARD)
+    if (boardId == "NEW") {
+      // This is just a check if this is really a string...
+      // see https://stackoverflow.com/a/14289568
+      boardName, _ := clientState[CLIENT_STATE_TRELLO_BOARD_NAME].(string)
+      board := createNewTrelloBoard(metadata.AuthKey, boardName)
+      boardId = board.Id
+    }
     lists := getTrelloListsFromBoardId(boardId, metadata.AuthKey)
     fmt.Fprint(w, buildOutputForTrelloLists(lists))
   }
@@ -124,10 +129,14 @@ func buildOutputForSavingAuthKey() (output string) {
 
 func buildOutputForTrelloBoards(boards []trelloBoard) (output string) {
   output = "<Page>"
-  output += "<H2>Your Trello boards:</H2>"
+  output += "<H2>Your Trello boards</H2>"
   for _, board := range boards {
     output += "<Link action=\"" + ACTION_USE_TRELLO_BOARD + board.Id + "\">" + board.Name + "</Link><BR/>"
   }
+  output += "<BR/>"
+  output += "<H2>Or create a new one</H2>"
+  output += "<Input name=\"" + CLIENT_STATE_TRELLO_BOARD_NAME + "\" label=\"Boardname\" value=\"Treit\" />"
+  output += "<Button action=\"" + ACTION_USE_TRELLO_BOARD + "NEW\">Create</Button>"
   output += "</Page>"
   return
 }
@@ -144,8 +153,8 @@ func buildOutputForTrelloLists(lists []trelloList) (output string) {
   return
 }
 
-func createNewTrelloBoard(authKey string) (board trelloBoard) {
-  response, err := http.Post("https://api.trello.com/1/boards?name=TreDo&key=" + TRELLO_API_KEY + "&token=" + authKey, "", nil)
+func createNewTrelloBoard(authKey string, boardname string) (board trelloBoard) {
+  response, err := http.Post("https://api.trello.com/1/boards?name=" + boardname + "&key=" + TRELLO_API_KEY + "&token=" + authKey, "", nil)
   if err != nil {
     // TODO: Handle error
   }
