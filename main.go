@@ -104,7 +104,7 @@ func main() {
 }
 
 func buildOutputForViewWithoutKey() (output string) {
-  linkForAuth := "https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&name=Zeit%20Trello%20Integration&key=" + API_KEY
+  linkForAuth := "https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&name=Zeit%20Trello%20Integration&key=" + TRELLO_API_KEY
 
   output = "<Page>"
   output += "<Container><Input name=\"" + CLIENT_STATE_AUTH_KEY + "\" label=\"Auth Key\"/><Button action=\"" + ACTION_SET_AUTH_KEY + "\">Set Auth Key</Button></Container>"
@@ -144,7 +144,7 @@ func buildOutputForTrelloLists(lists []trelloList) (output string) {
 }
 
 func createNewTrelloBoard(authKey string) (board trelloBoard) {
-  response, err := http.Post("https://api.trello.com/1/boards?name=TreDo&key=" + API_KEY + "&token=" + authKey, "", nil)
+  response, err := http.Post("https://api.trello.com/1/boards?name=TreDo&key=" + TRELLO_API_KEY + "&token=" + authKey, "", nil)
   if err != nil {
     // TODO: Handle error
   }
@@ -188,7 +188,7 @@ func saveMetadata(configurationId string, token string, metadataJsonString strin
 }
 
 func getTrelloBoardsByUsername(username string, authKey string) (boards []trelloBoard) {
-  response, err := http.Get("https://api.trello.com/1/members/" + username + "/boards?key=" + API_KEY + "&token=" + authKey)
+  response, err := http.Get("https://api.trello.com/1/members/" + username + "/boards?key=" + TRELLO_API_KEY + "&token=" + authKey)
   if err != nil {
     // TODO: Handle error
   }
@@ -203,7 +203,7 @@ func getTrelloBoardsByUsername(username string, authKey string) (boards []trello
 
 
 func getTrelloListsFromBoardId(boardId string, authKey string) (lists []trelloList) {
-  response, err := http.Get("https://api.trello.com/1/boards/" + boardId + "/lists?cards=all&key=" + API_KEY + "&token=" + authKey)
+  response, err := http.Get("https://api.trello.com/1/boards/" + boardId + "/lists?cards=all&key=" + TRELLO_API_KEY + "&token=" + authKey)
   if err != nil {
     // TODO: Handle error
   }
