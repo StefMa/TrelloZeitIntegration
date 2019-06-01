@@ -44,63 +44,60 @@ type metadata struct {
   AuthKey string  `json:"authKey"`
 }
 
-func main() {
-  http.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
-    body, err := ioutil.ReadAll(r.Body)
-    if err != nil {
-      // TODO: Handle error
-    }
+func HandleFunc(w http.ResponseWriter, r *http.Request) {
+  body, err := ioutil.ReadAll(r.Body)
+  if err != nil {
+    // TODO: Handle error
+  }
 
-    payload := payload{}
-    err = json.Unmarshal(body, &payload)
-    if err != nil {
-      // TODO: Handle error
-    }
-    action := payload.Action
-    clientState := payload.ClientState
-    configurationId := payload.ConfigurationId
-    token := payload.Token
-    metadata := getMetadata(configurationId, token)
+  payload := payload{}
+  err = json.Unmarshal(body, &payload)
+  if err != nil {
+    // TODO: Handle error
+  }
+  action := payload.Action
+  clientState := payload.ClientState
+  configurationId := payload.ConfigurationId
+  token := payload.Token
+  metadata := getMetadata(configurationId, token)
 
-    header := w.Header()
-    header.Add("Access-Control-Allow-Origin", "*")
-    header.Add("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-    header.Add("Access-Control-Allow-Headers", "Authorization, Accept, Content-Type")
+  header := w.Header()
+  header.Add("Access-Control-Allow-Origin", "*")
+  header.Add("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+  header.Add("Access-Control-Allow-Headers", "Authorization, Accept, Content-Type")
 
-    if (action == ACTION_VIEW && metadata.AuthKey == "") {
-      fmt.Fprint(w, buildOutputForViewWithoutKey())
-      return
-    }
+  if (action == ACTION_VIEW && metadata.AuthKey == "") {
+    fmt.Fprint(w, buildOutputForViewWithoutKey())
+    return
+  }
 
-    if (action == ACTION_VIEW && metadata.AuthKey != "") {
-      // TODO: I need the username (or id :eyeroll:)
-      boards := getTrelloBoardsByUsername(TRELLO_USERNAME, metadata.AuthKey)
-      output := buildOutputForTrelloBoards(boards)
-      fmt.Fprint(w, output)
-      return
-    }
+  if (action == ACTION_VIEW && metadata.AuthKey != "") {
+    // TODO: I need the username (or id :eyeroll:)
+    boards := getTrelloBoardsByUsername(TRELLO_USERNAME, metadata.AuthKey)
+    output := buildOutputForTrelloBoards(boards)
+    fmt.Fprint(w, output)
+    return
+  }
 
-    if (action == ACTION_SET_AUTH_KEY && metadata.AuthKey == "") {
-      // This is just a check if this is really a string...
-      // see https://stackoverflow.com/a/14289568
-      str, _ := clientState[CLIENT_STATE_AUTH_KEY].(string)
-      // Save the authKey
-      var jsonStr = "{\"authKey\":\"" + str + "\"}"
-      saveMetadata(configurationId, token, jsonStr)
-      // Create the new board...
-      //board := createNewTrelloBoard(authKey)
-      // Return the HTML code
-      fmt.Fprint(w, buildOutputForSavingAuthKey())
-      return
-    }
+  if (action == ACTION_SET_AUTH_KEY && metadata.AuthKey == "") {
+    // This is just a check if this is really a string...
+    // see https://stackoverflow.com/a/14289568
+    str, _ := clientState[CLIENT_STATE_AUTH_KEY].(string)
+    // Save the authKey
+    var jsonStr = "{\"authKey\":\"" + str + "\"}"
+    saveMetadata(configurationId, token, jsonStr)
+    // Create the new board...
+    //board := createNewTrelloBoard(authKey)
+    // Return the HTML code
+    fmt.Fprint(w, buildOutputForSavingAuthKey())
+    return
+  }
 
-    if (strings.HasPrefix(action, ACTION_USE_TRELLO_BOARD) && metadata.AuthKey != "") {
-      boardId := strings.TrimPrefix(action, ACTION_USE_TRELLO_BOARD)
-      lists := getTrelloListsFromBoardId(boardId, metadata.AuthKey)
-      fmt.Fprint(w, buildOutputForTrelloLists(lists))
-    }
-  })
-  http.ListenAndServe(":80", nil)
+  if (strings.HasPrefix(action, ACTION_USE_TRELLO_BOARD) && metadata.AuthKey != "") {
+    boardId := strings.TrimPrefix(action, ACTION_USE_TRELLO_BOARD)
+    lists := getTrelloListsFromBoardId(boardId, metadata.AuthKey)
+    fmt.Fprint(w, buildOutputForTrelloLists(lists))
+  }
 }
 
 func buildOutputForViewWithoutKey() (output string) {
