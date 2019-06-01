@@ -121,7 +121,7 @@ func buildOutputForSetup() (output string) {
 
 func buildOutputForSavingAuthKey() (output string) {
   output = "<Page>"
-  output += "Setup everything.</BR>Redirect in 3 seconds..."
+  output += "Setup everything ✅<BR/>Redirect in 3 seconds..."
   output += "<AutoRefresh timeout=\"3000\" />"
   output += "</Page>"
   return
