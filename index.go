@@ -10,7 +10,6 @@ import(
 )
 
 const TRELLO_API_KEY = "[TRELLO_API_KEY]"
-const TRELLO_USERNAME = "[TRELLO_USERNAME]"
 
 type payload struct {
   Action string                       `json:"action"`
@@ -20,10 +19,11 @@ type payload struct {
 }
 
 const ACTION_VIEW = "view"
-const ACTION_SET_AUTH_KEY = "setAuthKey"
+const ACTION_FINISH_SETUP = "finishSetup"
 const ACTION_USE_TRELLO_BOARD = "useTrelloBoard"
 
 const CLIENT_STATE_AUTH_KEY = "authKey"
+const CLIENT_STATE_TRELLO_USERNAME = "trelloUsername"
 const CLIENT_STATE_TRELLO_BOARD_ID = "trelloBoardId"
 
 type trelloBoard struct {
@@ -42,6 +42,7 @@ type trelloCard struct {
 
 type metadata struct {
   AuthKey string  `json:"authKey"`
+  Username string `json:"username"`
 }
 
 func HandleFunc(w http.ResponseWriter, r *http.Request) {
@@ -67,24 +68,25 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
   header.Add("Access-Control-Allow-Headers", "Authorization, Accept, Content-Type")
 
   if (action == ACTION_VIEW && metadata.AuthKey == "") {
-    fmt.Fprint(w, buildOutputForViewWithoutKey())
+    fmt.Fprint(w, buildOutputForSetup())
     return
   }
 
   if (action == ACTION_VIEW && metadata.AuthKey != "") {
     // TODO: I need the username (or id :eyeroll:)
-    boards := getTrelloBoardsByUsername(TRELLO_USERNAME, metadata.AuthKey)
+    boards := getTrelloBoardsByUsername(metadata.Username, metadata.AuthKey)
     output := buildOutputForTrelloBoards(boards)
     fmt.Fprint(w, output)
     return
   }
 
-  if (action == ACTION_SET_AUTH_KEY && metadata.AuthKey == "") {
+  if (action == ACTION_FINISH_SETUP && metadata.AuthKey == "") {
     // This is just a check if this is really a string...
     // see https://stackoverflow.com/a/14289568
-    str, _ := clientState[CLIENT_STATE_AUTH_KEY].(string)
+    authKey, _ := clientState[CLIENT_STATE_AUTH_KEY].(string)
+    username, _ := clientState[CLIENT_STATE_TRELLO_USERNAME].(string)
     // Save the authKey
-    var jsonStr = "{\"authKey\":\"" + str + "\"}"
+    var jsonStr = "{\"authKey\":\"" + authKey + "\", \"username\":\"" + username + "\"}"
     saveMetadata(configurationId, token, jsonStr)
     // Create the new board...
     //board := createNewTrelloBoard(authKey)
@@ -100,19 +102,21 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-func buildOutputForViewWithoutKey() (output string) {
+func buildOutputForSetup() (output string) {
   linkForAuth := "https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&name=Zeit%20Trello%20Integration&key=" + TRELLO_API_KEY
 
   output = "<Page>"
-  output += "<Container><Input name=\"" + CLIENT_STATE_AUTH_KEY + "\" label=\"Auth Key\"/><Button action=\"" + ACTION_SET_AUTH_KEY + "\">Set Auth Key</Button></Container>"
-  output += "<Container><Link href=\"" + linkForAuth + "\" target=\"_blank\">Get Auth key</Link></Container>"
+  output += "<H2>Setup</H2>"
+  output += "<Container><Input name=\"" + CLIENT_STATE_AUTH_KEY + "\" label=\"Auth Key\"/><Link href=\"" + linkForAuth + "\" target=\"_blank\">Get Auth key</Link></Container>"
+  output += "<Container><Input name=\"" + CLIENT_STATE_TRELLO_USERNAME + "\" label=\"Username\"/></Container>"
+  output += "<Button action=\"" + ACTION_FINISH_SETUP + "\">Finish setup</Button>"
   output += "</Page>"
   return
 }
 
 func buildOutputForSavingAuthKey() (output string) {
   output = "<Page>"
-  output += "Received authKey. Redirect in 3 seconds."
+  output += "Setup everything.</BR>Redirect in 3 seconds..."
   output += "<AutoRefresh timeout=\"3000\" />"
   output += "</Page>"
   return
