@@ -7,6 +7,7 @@ import(
   "encoding/json"
   "bytes"
   "strings"
+  "net/url"
 )
 
 const TRELLO_API_KEY = "[TRELLO_API_KEY]"
@@ -23,11 +24,14 @@ const ACTION_FINISH_SETUP = "finishSetup"
 const ACTION_USE_TRELLO_BOARD = "useTrelloBoard"
 const ACTION_MOVE_CARD_TO_LIST = "moveCardToList"
 const ACTION_DELETE_CARD = "deleteCard"
+const ACTION_ADD_CARD = "addCard"
 
 const CLIENT_STATE_AUTH_KEY = "authKey"
 const CLIENT_STATE_TRELLO_USERNAME = "trelloUsername"
 const CLIENT_STATE_TRELLO_BOARD_NAME = "trelloBoardName"
 const CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID = "updateCardIdInListId"
+const CLIENT_STATE_ADD_CARD_NAME = "cardName"
+const CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID = "addCardTolist"
 
 type trelloBoard struct {
   Id string   `json:"id"`
@@ -129,6 +133,16 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     fmt.Fprint(w, buildOutputForTrelloLists(lists, ids[1]))
     return
   }
+
+  if (action == ACTION_ADD_CARD && metadata.AuthKey != "") {
+    boardListId, _ := clientState[CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID].(string)
+    ids := strings.Split(boardListId, "_")
+    cardName, _ := clientState[CLIENT_STATE_ADD_CARD_NAME].(string)
+    addCard(cardName, ids[1], metadata.AuthKey)
+    lists := getTrelloListsFromBoardId(ids[0], metadata.AuthKey)
+    fmt.Fprint(w, buildOutputForTrelloLists(lists, ids[0]))
+    return
+  }
 }
 
 func buildOutputForSetup() (output string) {
@@ -190,6 +204,13 @@ func buildOutputForTrelloLists(lists []trelloList, boardId string) (output strin
       output += "<BR/>"
     }
   }
+  output += "<Input name=\"" + CLIENT_STATE_ADD_CARD_NAME + "\" label=\"Add card\"/>"
+  output += "<Select name=\"" + CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID + "\" action=\"" + ACTION_ADD_CARD + "\">"
+  output += "<Option selected disabled caption=\"Add card to...\"/>"
+  for i, name := range listNames {
+    output += "<Option value=\"" + boardId + "_" + listIds[i] + "\" caption=\"" + name + "\" />"
+  }
+  output += "</Select>"
   output += "</Page>"
   return
 }
@@ -285,4 +306,12 @@ func deleteCard(cardId string, authKey string) {
   if err != nil {
     // TODO: Handle error
   }
+}
+
+func addCard(cardName string, listId string, authKey string) {
+  response, err := http.Post("https://api.trello.com/1/cards?name=" + url.QueryEscape(cardName) + "&idList=" + listId + "&key=" + TRELLO_API_KEY + "&token=" + authKey, "", nil)
+  if err != nil {
+    // TODO: Handle error
+  }
+  defer response.Body.Close()
 }
