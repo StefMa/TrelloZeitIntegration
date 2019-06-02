@@ -28,6 +28,7 @@ const ACTION_ADD_CARD = "addCard"
 
 const CLIENT_STATE_AUTH_KEY = "authKey"
 const CLIENT_STATE_TRELLO_USERNAME = "trelloUsername"
+const CLIENT_STATE_USE_TRELLO_BOARD_ID = "trelloBoardId"
 const CLIENT_STATE_TRELLO_BOARD_NAME = "trelloBoardName"
 const CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID = "updateCardIdInListId"
 const CLIENT_STATE_ADD_CARD_NAME = "cardName"
@@ -111,6 +112,10 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
       boardName, _ := clientState[CLIENT_STATE_TRELLO_BOARD_NAME].(string)
       board := createNewTrelloBoard(metadata.AuthKey, boardName)
       boardId = board.Id
+    } else {
+      // This is just a check if this is really a string...
+      // see https://stackoverflow.com/a/14289568
+      boardId, _ = clientState[CLIENT_STATE_USE_TRELLO_BOARD_ID].(string)
     }
     lists := getTrelloListsFromBoardId(boardId, metadata.AuthKey)
     fmt.Fprint(w, buildOutputForTrelloLists(lists, boardId))
@@ -167,14 +172,19 @@ func buildOutputForSavingAuthKey() (output string) {
 
 func buildOutputForTrelloBoards(boards []trelloBoard) (output string) {
   output = "<Page>"
-  output += "<H2>Your Trello boards</H2>"
+  output += "<H2>Choose board</H2>"
+  output += "<Select name=\"" + CLIENT_STATE_USE_TRELLO_BOARD_ID + "\" action=\"" + ACTION_USE_TRELLO_BOARD + "\">"
+  output += "<Option selected disabled caption=\"Select board...\"/>"
   for _, board := range boards {
-    output += "<Link action=\"" + ACTION_USE_TRELLO_BOARD + board.Id + "\" target=\"_blank\">" + board.Name + "</Link><BR/>"
+    output += "<Option value=\"" + board.Id + "\" caption=\"" + board.Name + "\" />"
   }
+  output += "</Select>"
+  output += "<BR/><BR/>"
+  output += "Or create a new one"
   output += "<BR/>"
-  output += "<H2>Or create a new one</H2>"
-  output += "<Input name=\"" + CLIENT_STATE_TRELLO_BOARD_NAME + "\" label=\"Boardname\" value=\"Treit\" />"
-  output += "<Button action=\"" + ACTION_USE_TRELLO_BOARD + "NEW\">Create</Button>"
+  output += "<Input name=\"" + CLIENT_STATE_TRELLO_BOARD_NAME + "\" value=\"Boardname\" />"
+  output += "  "
+  output += "<Button action=\"" + ACTION_USE_TRELLO_BOARD + "NEW\" secondary>Create</Button>"
   output += "</Page>"
   return
 }
