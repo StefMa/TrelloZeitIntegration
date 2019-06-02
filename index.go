@@ -198,29 +198,37 @@ func buildOutputForTrelloLists(lists []trelloList, boardId string) (output strin
   }
 
   output = "<Page>"
-  for _, list := range lists {
-    output += "<H2>" + list.Name + "</H2>"
-    for _, card := range list.Cards {
-      output += "<Link href=\"" + card.ShortUrl + "\">" + card.Name + "</Link>"
-      output += "<Link action=\"" + ACTION_DELETE_CARD + "_" + boardId + "_" + card.Id + "\">❌</Link>"
-      output += "<Select name=\"" + CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID + "\" action=\"" + ACTION_MOVE_CARD_TO_LIST + "\">"
-      output += "<Option selected disabled caption=\"Move card...\"/>"
-      for i, name := range listNames {
-        if name != list.Name {
-          output += "<Option value=\"" + boardId + "_" + card.Id + "_" + listIds[i] + "\" caption=\"" + name + "\" />"
-        }
-      }
-      output += "</Select>"
-      output += "<BR/>"
-    }
-  }
-  output += "<Input name=\"" + CLIENT_STATE_ADD_CARD_NAME + "\" label=\"Add card\"/>"
+  output += "<TextArea width=\name=\"" + CLIENT_STATE_ADD_CARD_NAME + "\" label=\"Add card\"/>"
   output += "<Select name=\"" + CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID + "\" action=\"" + ACTION_ADD_CARD + "\">"
   output += "<Option selected disabled caption=\"Add card to...\"/>"
   for i, name := range listNames {
     output += "<Option value=\"" + boardId + "_" + listIds[i] + "\" caption=\"" + name + "\" />"
   }
   output += "</Select>"
+  output += "<BR/><BR/>"
+
+  for _, list := range lists {
+    output += "<H2>" + list.Name + "</H2>"
+    output += "<Box display=\"flex\" flex-wrap=\"wrap\" justifyContent=\"flex-start\" alignItems=\"center\">"
+    for _, card := range list.Cards {
+      output += "<Box display=\"flex\" flex-direction=\"column\" padding=\"12px\" margin=\"3px 3px 3px 0px\" backgroundColor=\"#FFF\" border=\"1px solid #f5f5f5\" borderRadius=\"3px\" >"
+      output += "<Box display=\"flex\" alignItems=\"center\">"
+      output += "<Link href=\"" + card.ShortUrl + "\">" + card.Name + "</Link>"
+      output += "<Link action=\"" + ACTION_DELETE_CARD + "_" + boardId + "_" + card.Id + "\">❌</Link>"
+      output += "</Box>"
+      output += "<Select name=\"" + CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID + "\" action=\"" + ACTION_MOVE_CARD_TO_LIST + "\">"
+      output += "<Option selected disabled caption=\"Move card to...\"/>"
+      for i, name := range listNames {
+        if name != list.Name {
+          output += "<Option value=\"" + boardId + "_" + card.Id + "_" + listIds[i] + "\" caption=\"" + name + "\" />"
+        }
+      }
+      output += "</Select>"
+      output += "</Box>"
+    }
+    output += "</Box>"
+    output += "<BR/>"
+  }
   output += "</Page>"
   return
 }
