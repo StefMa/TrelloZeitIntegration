@@ -84,7 +84,6 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
   }
 
   if (action == ACTION_VIEW && metadata.AuthKey != "") {
-    // TODO: I need the username (or id :eyeroll:)
     boards := getTrelloBoardsByUsername(metadata.Username, metadata.AuthKey)
     output := buildOutputForTrelloBoards(boards)
     fmt.Fprint(w, output)
@@ -99,8 +98,8 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     // Save the authKey
     var jsonStr = "{\"authKey\":\"" + authKey + "\", \"username\":\"" + username + "\"}"
     saveMetadata(configurationId, token, jsonStr)
-    // Return the HTML code
-    fmt.Fprint(w, buildOutputForSavingAuthKey())
+    boards := getTrelloBoardsByUsername(username, authKey)
+    fmt.Fprint(w, buildOutputForTrelloBoards(boards))
     return
   }
 
@@ -158,14 +157,6 @@ func buildOutputForSetup() (output string) {
   output += "<Container><Input name=\"" + CLIENT_STATE_AUTH_KEY + "\" label=\"Auth Key\"/><Link href=\"" + linkForAuth + "\" target=\"_blank\">Get Auth key</Link></Container>"
   output += "<Container><Input name=\"" + CLIENT_STATE_TRELLO_USERNAME + "\" label=\"Username\"/></Container>"
   output += "<Button action=\"" + ACTION_FINISH_SETUP + "\">Finish setup</Button>"
-  output += "</Page>"
-  return
-}
-
-func buildOutputForSavingAuthKey() (output string) {
-  output = "<Page>"
-  output += "Setup everything ✅<BR/>Redirect in 3 seconds..."
-  output += "<AutoRefresh timeout=\"3000\" />"
   output += "</Page>"
   return
 }
