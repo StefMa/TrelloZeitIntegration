@@ -22,6 +22,7 @@ const ACTION_VIEW = "view"
 const ACTION_FINISH_SETUP = "finishSetup"
 const ACTION_USE_TRELLO_BOARD = "useTrelloBoard"
 const ACTION_MOVE_CARD_TO_LIST = "moveCardToList"
+const ACTION_DELETE_CARD = "deleteCard"
 
 const CLIENT_STATE_AUTH_KEY = "authKey"
 const CLIENT_STATE_TRELLO_USERNAME = "trelloUsername"
@@ -109,6 +110,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     }
     lists := getTrelloListsFromBoardId(boardId, metadata.AuthKey)
     fmt.Fprint(w, buildOutputForTrelloLists(lists, boardId))
+    return
   }
 
   if (action == ACTION_MOVE_CARD_TO_LIST && metadata.AuthKey != "") {
@@ -117,6 +119,15 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     moveCardToList(ids[1], ids[2], metadata.AuthKey)
     lists := getTrelloListsFromBoardId(ids[0], metadata.AuthKey)
     fmt.Fprint(w, buildOutputForTrelloLists(lists, ids[0]))
+    return
+  }
+
+  if (strings.HasPrefix(action, ACTION_DELETE_CARD) && metadata.AuthKey != "") {
+    ids := strings.Split(action, "_")
+    deleteCard(ids[2], metadata.AuthKey)
+    lists := getTrelloListsFromBoardId(ids[1], metadata.AuthKey)
+    fmt.Fprint(w, buildOutputForTrelloLists(lists, ids[1]))
+    return
   }
 }
 
@@ -167,6 +178,7 @@ func buildOutputForTrelloLists(lists []trelloList, boardId string) (output strin
     output += "<H2>" + list.Name + "</H2>"
     for _, card := range list.Cards {
       output += "<Link href=\"" + card.ShortUrl + "\">" + card.Name + "</Link>"
+      output += "<Link action=\"" + ACTION_DELETE_CARD + "_" + boardId + "_" + card.Id + "\">❌</Link>"
       output += "<Select name=\"" + CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID + "\" action=\"" + ACTION_MOVE_CARD_TO_LIST + "\">"
       output += "<Option selected disabled caption=\"Move card...\"/>"
       for i, name := range listNames {
@@ -258,6 +270,16 @@ func getTrelloListsFromBoardId(boardId string, authKey string) (lists []trelloLi
 func moveCardToList(cardId string, listId string, authKey string) {
   client := &http.Client{}
   req, err := http.NewRequest("PUT", "https://api.trello.com/1/cards/" + cardId + "?idList=" + listId + "&key=" + TRELLO_API_KEY + "&token=" + authKey, nil)
+  response, err := client.Do(req)
+  defer response.Body.Close()
+  if err != nil {
+    // TODO: Handle error
+  }
+}
+
+func deleteCard(cardId string, authKey string) {
+  client := &http.Client{}
+  req, err := http.NewRequest("DELETE", "https://api.trello.com/1/cards/" + cardId + "?key=" + TRELLO_API_KEY + "&token=" + authKey, nil)
   response, err := client.Do(req)
   defer response.Body.Close()
   if err != nil {
