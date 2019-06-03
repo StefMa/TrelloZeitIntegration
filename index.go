@@ -189,7 +189,7 @@ func buildOutputForTrelloLists(lists []trelloList, boardId string) (output strin
   }
 
   output = "<Page>"
-  output += "<TextArea width=\name=\"" + CLIENT_STATE_ADD_CARD_NAME + "\" label=\"Add card\"/>"
+  output += "<Input name=\"" + CLIENT_STATE_ADD_CARD_NAME + "\" label=\"Add card\"/>"
   output += "<Select name=\"" + CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID + "\" action=\"" + ACTION_ADD_CARD + "\">"
   output += "<Option selected disabled caption=\"Add card to...\"/>"
   for i, name := range listNames {
