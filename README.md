@@ -6,5 +6,7 @@ Zeit Integration and a little bit with the Trello API.
 
 ## How to build
 
-* Replace the `TRELLO_API_KEY` with your [**Trello API-KEY**](https://trello.com/app-key)
-* Run `now`. The uploaded file can be used in your Zeit Integration
+* Replace the [`API_KEY`](api/trello/api.go) with your [**Trello API-KEY**](https://trello.com/app-key)
+* Run `now`
+
+Now you should be able to use the deployment as your Zeit Integration UIHook

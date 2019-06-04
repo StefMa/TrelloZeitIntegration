@@ -1,4 +1,4 @@
-package main
+package treit
 
 import(
   "fmt"
@@ -7,10 +7,8 @@ import(
   "encoding/json"
   "bytes"
   "strings"
-  "net/url"
+  "treit/api/trello"
 )
-
-const TRELLO_API_KEY = "[TRELLO_API_KEY]"
 
 type payload struct {
   Action string                       `json:"action"`
@@ -33,23 +31,6 @@ const CLIENT_STATE_TRELLO_BOARD_NAME = "trelloBoardName"
 const CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID = "updateCardIdInListId"
 const CLIENT_STATE_ADD_CARD_NAME = "cardName"
 const CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID = "addCardTolist"
-
-type trelloBoard struct {
-  Id string   `json:"id"`
-  Name string `json:"name"`
-}
-
-type trelloList struct {
-  Id string           `json:"id"`
-  Name string         `json:"name"`
-  Cards []trelloCard  `json:"cards"`
-}
-
-type trelloCard struct {
-  Id string       `json:"id"`
-  Name string     `json:"name"`
-  ShortUrl string `json:"shortUrl"`
-}
 
 type metadata struct {
   AuthKey string  `json:"authKey"`
@@ -84,7 +65,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
   }
 
   if (action == ACTION_VIEW && metadata.AuthKey != "") {
-    boards := getTrelloBoardsByUsername(metadata.Username, metadata.AuthKey)
+    boards := trello.GetBoardsByUsername(metadata.AuthKey, metadata.Username)
     output := buildOutputForTrelloBoards(boards)
     fmt.Fprint(w, output)
     return
@@ -98,7 +79,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     // Save the authKey
     var jsonStr = "{\"authKey\":\"" + authKey + "\", \"username\":\"" + username + "\"}"
     saveMetadata(configurationId, token, jsonStr)
-    boards := getTrelloBoardsByUsername(username, authKey)
+    boards := trello.GetBoardsByUsername(authKey, username)
     fmt.Fprint(w, buildOutputForTrelloBoards(boards))
     return
   }
@@ -109,14 +90,14 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
       // This is just a check if this is really a string...
       // see https://stackoverflow.com/a/14289568
       boardName, _ := clientState[CLIENT_STATE_TRELLO_BOARD_NAME].(string)
-      board := createNewTrelloBoard(metadata.AuthKey, boardName)
+      board := trello.CreateNewBoard(metadata.AuthKey, boardName)
       boardId = board.Id
     } else {
       // This is just a check if this is really a string...
       // see https://stackoverflow.com/a/14289568
       boardId, _ = clientState[CLIENT_STATE_USE_TRELLO_BOARD_ID].(string)
     }
-    lists := getTrelloListsFromBoardId(boardId, metadata.AuthKey)
+    lists := trello.GetListsFromBoardId(metadata.AuthKey, boardId)
     fmt.Fprint(w, buildOutputForTrelloLists(lists, boardId))
     return
   }
@@ -124,16 +105,16 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
   if (action == ACTION_MOVE_CARD_TO_LIST && metadata.AuthKey != "") {
     boardCardListId, _ := clientState[CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID].(string)
     ids := strings.Split(boardCardListId, "_")
-    moveCardToList(ids[1], ids[2], metadata.AuthKey)
-    lists := getTrelloListsFromBoardId(ids[0], metadata.AuthKey)
+    trello.MoveCardToList(metadata.AuthKey, ids[1], ids[2])
+    lists := trello.GetListsFromBoardId(metadata.AuthKey, ids[0])
     fmt.Fprint(w, buildOutputForTrelloLists(lists, ids[0]))
     return
   }
 
   if (strings.HasPrefix(action, ACTION_DELETE_CARD) && metadata.AuthKey != "") {
     ids := strings.Split(action, "_")
-    deleteCard(ids[2], metadata.AuthKey)
-    lists := getTrelloListsFromBoardId(ids[1], metadata.AuthKey)
+    trello.DeleteCard(metadata.AuthKey, ids[2])
+    lists := trello.GetListsFromBoardId(metadata.AuthKey, ids[1])
     fmt.Fprint(w, buildOutputForTrelloLists(lists, ids[1]))
     return
   }
@@ -142,15 +123,15 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     boardListId, _ := clientState[CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID].(string)
     ids := strings.Split(boardListId, "_")
     cardName, _ := clientState[CLIENT_STATE_ADD_CARD_NAME].(string)
-    addCard(cardName, ids[1], metadata.AuthKey)
-    lists := getTrelloListsFromBoardId(ids[0], metadata.AuthKey)
+    trello.AddCard(metadata.AuthKey, cardName, ids[1])
+    lists := trello.GetListsFromBoardId(metadata.AuthKey, ids[0])
     fmt.Fprint(w, buildOutputForTrelloLists(lists, ids[0]))
     return
   }
 }
 
 func buildOutputForSetup() (output string) {
-  linkForAuth := "https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&name=Zeit%20Trello%20Integration&key=" + TRELLO_API_KEY
+  linkForAuth := trello.LinkForAuthKey
 
   output = "<Page>"
   output += "<H2>Setup</H2>"
@@ -161,7 +142,7 @@ func buildOutputForSetup() (output string) {
   return
 }
 
-func buildOutputForTrelloBoards(boards []trelloBoard) (output string) {
+func buildOutputForTrelloBoards(boards []trello.Board) (output string) {
   output = "<Page>"
   output += "<H2>Choose board</H2>"
   output += "<Select name=\"" + CLIENT_STATE_USE_TRELLO_BOARD_ID + "\" action=\"" + ACTION_USE_TRELLO_BOARD + "\">"
@@ -180,7 +161,7 @@ func buildOutputForTrelloBoards(boards []trelloBoard) (output string) {
   return
 }
 
-func buildOutputForTrelloLists(lists []trelloList, boardId string) (output string) {
+func buildOutputForTrelloLists(lists []trello.List, boardId string) (output string) {
   listNames := []string{}
   listIds := []string{}
   for _, list := range lists {
@@ -224,21 +205,6 @@ func buildOutputForTrelloLists(lists []trelloList, boardId string) (output strin
   return
 }
 
-func createNewTrelloBoard(authKey string, boardname string) (board trelloBoard) {
-  response, err := http.Post("https://api.trello.com/1/boards?name=" + boardname + "&key=" + TRELLO_API_KEY + "&token=" + authKey, "", nil)
-  if err != nil {
-    // TODO: Handle error
-  }
-  defer response.Body.Close()
-  body, err := ioutil.ReadAll(response.Body)
-  if err != nil {
-    // TODO: Handle error
-  }
-  board = trelloBoard{}
-  json.Unmarshal(body, &board)
-  return
-}
-
 func getMetadata(configurationId string, token string) (metadata metadata) {
   client := &http.Client{}
   req, err := http.NewRequest("GET", "https://api.zeit.co/v1/integrations/configuration/" + configurationId + "/metadata", nil)
@@ -266,61 +232,4 @@ func saveMetadata(configurationId string, token string, metadataJsonString strin
   if err != nil {
     // TODO: Handle error
   }
-}
-
-func getTrelloBoardsByUsername(username string, authKey string) (boards []trelloBoard) {
-  response, err := http.Get("https://api.trello.com/1/members/" + username + "/boards?key=" + TRELLO_API_KEY + "&token=" + authKey)
-  if err != nil {
-    // TODO: Handle error
-  }
-  defer response.Body.Close()
-  body, err := ioutil.ReadAll(response.Body)
-  if err != nil {
-    // TODO: Handle error
-  }
-  json.Unmarshal(body, &boards)
-  return
-}
-
-
-func getTrelloListsFromBoardId(boardId string, authKey string) (lists []trelloList) {
-  response, err := http.Get("https://api.trello.com/1/boards/" + boardId + "/lists?cards=all&card_fields=id,name,shortUrl&key=" + TRELLO_API_KEY + "&token=" + authKey)
-  if err != nil {
-    // TODO: Handle error
-  }
-  defer response.Body.Close()
-  body, err := ioutil.ReadAll(response.Body)
-  if err != nil {
-    // TODO: Handle error
-  }
-  json.Unmarshal(body, &lists)
-  return
-}
-
-func moveCardToList(cardId string, listId string, authKey string) {
-  client := &http.Client{}
-  req, err := http.NewRequest("PUT", "https://api.trello.com/1/cards/" + cardId + "?idList=" + listId + "&key=" + TRELLO_API_KEY + "&token=" + authKey, nil)
-  response, err := client.Do(req)
-  defer response.Body.Close()
-  if err != nil {
-    // TODO: Handle error
-  }
-}
-
-func deleteCard(cardId string, authKey string) {
-  client := &http.Client{}
-  req, err := http.NewRequest("DELETE", "https://api.trello.com/1/cards/" + cardId + "?key=" + TRELLO_API_KEY + "&token=" + authKey, nil)
-  response, err := client.Do(req)
-  defer response.Body.Close()
-  if err != nil {
-    // TODO: Handle error
-  }
-}
-
-func addCard(cardName string, listId string, authKey string) {
-  response, err := http.Post("https://api.trello.com/1/cards?name=" + url.QueryEscape(cardName) + "&idList=" + listId + "&key=" + TRELLO_API_KEY + "&token=" + authKey, "", nil)
-  if err != nil {
-    // TODO: Handle error
-  }
-  defer response.Body.Close()
 }
