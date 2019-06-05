@@ -1,0 +1,14 @@
+<Page>
+  <H2>Choose board</H2>
+  <Select name="{{.ClientStateUseTrelloBoardId}}" action="{{.ActionUseTrelloBoard}}">
+    <Option selected disabled caption="Select board..."/>
+    {{range .Boards}}
+      <Option value="{{.BoardId}}" caption="{{.BoardName}}" />
+    {{end}}
+  </Select>
+  <BR/><BR/>
+  Or create a new one
+  <BR/>
+  <Input name="{{.ClientStateTrelloBoardName}}" value="Boardname" />
+  <Button action="{{.ActionUseTrelloBoard}}NEW" secondary>Create</Button>
+</Page>
