@@ -7,7 +7,6 @@ import(
   "bytes"
   "strings"
   "treit/api/trello"
-  "html/template"
   "treit/web/template/templateutil"
 )
 
@@ -61,24 +60,14 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
   header.Add("Access-Control-Allow-Headers", "Authorization, Accept, Content-Type")
 
   if (action == ACTION_VIEW && metadata.AuthKey == "") {
-    // TODO: Replace the two lines below with
-    // tmpl, model := templateutil.GenerateForSetup(CLIENT_STATE_AUTH_KEY, trello.LinkForAuthKey, CLIENT_STATE_TRELLO_USERNAME, ACTION_FINISH_SETUP)
-    // as soon as https://github.com/zeit/now-builders/issues/564
-    // is fixed or clarified
-    tmpl := template.Must(template.ParseFiles("web/template/setup.html"))
-    model := templateutil.CreateSetupModel(CLIENT_STATE_AUTH_KEY, trello.LinkForAuthKey, CLIENT_STATE_TRELLO_USERNAME, ACTION_FINISH_SETUP)
+    tmpl, model := templateutil.GenerateForSetup(CLIENT_STATE_AUTH_KEY, trello.LinkForAuthKey, CLIENT_STATE_TRELLO_USERNAME, ACTION_FINISH_SETUP)
     tmpl.Execute(w, model)
     return
   }
 
   if (action == ACTION_VIEW && metadata.AuthKey != "") {
     boards := trello.GetBoardsByUsername(metadata.AuthKey, metadata.Username)
-    // TODO: Replace the two lines below with
-    // tmpl, model := templateutil.GenerateForTrelloBoards(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
-    // as soon as https://github.com/zeit/now-builders/issues/564
-    // is fixed or clarified
-    tmpl := template.Must(template.ParseFiles("web/template/trelloBoards.html"))
-    model := templateutil.CreateTrelloBoardsModel(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
+    tmpl, model := templateutil.GenerateForTrelloBoards(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
     tmpl.Execute(w, model)
     return
   }
@@ -92,12 +81,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     var jsonStr = "{\"authKey\":\"" + authKey + "\", \"username\":\"" + username + "\"}"
     saveMetadata(configurationId, token, jsonStr)
     boards := trello.GetBoardsByUsername(authKey, username)
-    // TODO: Replace the two lines below with
-    // tmpl, model := templateutil.GenerateForTrelloBoards(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
-    // as soon as https://github.com/zeit/now-builders/issues/564
-    // is fixed or clarified
-    tmpl := template.Must(template.ParseFiles("web/template/trelloBoards.html"))
-    model := templateutil.CreateTrelloBoardsModel(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
+    tmpl, model := templateutil.GenerateForTrelloBoards(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
     tmpl.Execute(w, model)
     return
   }
@@ -116,12 +100,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
       boardId, _ = clientState[CLIENT_STATE_USE_TRELLO_BOARD_ID].(string)
     }
     lists := trello.GetListsFromBoardId(metadata.AuthKey, boardId)
-    // TODO: Replace the two lines below with
-    // tmpl, model := templateutil.GenerateForTrelloBoards(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
-    // as soon as https://github.com/zeit/now-builders/issues/564
-    // is fixed or clarified
-    tmpl := template.Must(template.ParseFiles("web/template/trelloLists.html"))
-    model := templateutil.CreateTrelloListsModel(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, boardId, CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
+    tmpl, model := templateutil.GenerateForTrelloLists(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, boardId, CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
     tmpl.Execute(w, model)
     return
   }
@@ -131,12 +110,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     ids := strings.Split(boardCardListId, "_")
     trello.MoveCardToList(metadata.AuthKey, ids[1], ids[2])
     lists := trello.GetListsFromBoardId(metadata.AuthKey, ids[0])
-    // TODO: Replace the two lines below with
-    // tmpl, model := templateutil.GenerateForTrelloBoards(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
-    // as soon as https://github.com/zeit/now-builders/issues/564
-    // is fixed or clarified
-    tmpl := template.Must(template.ParseFiles("web/template/trelloLists.html"))
-    model := templateutil.CreateTrelloListsModel(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, ids[0], CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
+    tmpl, model := templateutil.GenerateForTrelloLists(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, ids[0], CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
     tmpl.Execute(w, model)
     return
   }
@@ -145,12 +119,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     ids := strings.Split(action, "_")
     trello.DeleteCard(metadata.AuthKey, ids[2])
     lists := trello.GetListsFromBoardId(metadata.AuthKey, ids[1])
-    // TODO: Replace the two lines below with
-    // tmpl, model := templateutil.GenerateForTrelloBoards(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
-    // as soon as https://github.com/zeit/now-builders/issues/564
-    // is fixed or clarified
-    tmpl := template.Must(template.ParseFiles("web/template/trelloLists.html"))
-    model := templateutil.CreateTrelloListsModel(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, ids[1], CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
+    tmpl, model := templateutil.GenerateForTrelloLists(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, ids[1], CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
     tmpl.Execute(w, model)
     return
   }
@@ -161,12 +130,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     cardName, _ := clientState[CLIENT_STATE_ADD_CARD_NAME].(string)
     trello.AddCard(metadata.AuthKey, cardName, ids[1])
     lists := trello.GetListsFromBoardId(metadata.AuthKey, ids[0])
-    // TODO: Replace the two lines below with
-    // tmpl, model := templateutil.GenerateForTrelloBoards(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
-    // as soon as https://github.com/zeit/now-builders/issues/564
-    // is fixed or clarified
-    tmpl := template.Must(template.ParseFiles("web/template/trelloLists.html"))
-    model := templateutil.CreateTrelloListsModel(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, ids[0], CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
+    tmpl, model := templateutil.GenerateForTrelloLists(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, ids[0], CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
     tmpl.Execute(w, model)
     return
   }

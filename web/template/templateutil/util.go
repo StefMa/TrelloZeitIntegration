@@ -47,19 +47,13 @@ type TrelloCard struct {
   CardShortUrl string
 }
 
-// FIXME: Currently this function crash on now.
-// See https://github.com/zeit/now-builders/issues/564
 func GenerateForSetup(clientStateAuthKey string, linkForAuthKey string, clientStateTrelloUserName string, actionFinishSetup string) (tmpl *template.Template, model Setup) {
-  tmpl = template.Must(template.ParseFiles("../setup.html"))
-  model = CreateSetupModel(clientStateAuthKey, linkForAuthKey, clientStateTrelloUserName, actionFinishSetup)
+  tmpl = template.Must(template.ParseFiles("web/template/setup.html"))
+  model = createSetupModel(clientStateAuthKey, linkForAuthKey, clientStateTrelloUserName, actionFinishSetup)
   return
 }
 
-// TODO: Inline me in GenerateForSetup
-// as soon the issue is fixed.
-// Currently its only available
-// to "don't break the API" from the `index.go`
-func CreateSetupModel(clientStateAuthKey string, linkForAuthKey string, clientStateTrelloUserName string, actionFinishSetup string) (model Setup) {
+func createSetupModel(clientStateAuthKey string, linkForAuthKey string, clientStateTrelloUserName string, actionFinishSetup string) (model Setup) {
   model = Setup {
     ClientStateAuthKey: clientStateAuthKey,
     LinkForAuthKey: linkForAuthKey,
@@ -69,19 +63,13 @@ func CreateSetupModel(clientStateAuthKey string, linkForAuthKey string, clientSt
   return
 }
 
-// FIXME: Currently this function crash on now.
-// See https://github.com/zeit/now-builders/issues/564
 func GenerateForTrelloBoards(clientStateUseTrelloBoardId string, actionUseTrelloBoard string, boards []trello.Board, clientStateTrelloBoardName string) (tmpl *template.Template, model TrelloBoards) {
-  tmpl = template.Must(template.ParseFiles("../trelloBoards.html"))
-  model = CreateTrelloBoardsModel(clientStateUseTrelloBoardId, actionUseTrelloBoard, boards, clientStateTrelloBoardName)
+  tmpl = template.Must(template.ParseFiles("web/template/trelloBoards.html"))
+  model = createTrelloBoardsModel(clientStateUseTrelloBoardId, actionUseTrelloBoard, boards, clientStateTrelloBoardName)
   return
 }
 
-// TODO: Inline me in GenerateForTrelloBoards
-// as soon the issue is fixed.
-// Currently its only available
-// to "don't break the API" from the `index.go`
-func CreateTrelloBoardsModel(clientStateUseTrelloBoardId string, actionUseTrelloBoard string, boards []trello.Board, clientStateTrelloBoardName string) (model TrelloBoards) {
+func createTrelloBoardsModel(clientStateUseTrelloBoardId string, actionUseTrelloBoard string, boards []trello.Board, clientStateTrelloBoardName string) (model TrelloBoards) {
   templateBoards := []TrelloBoard{}
   for _, board := range boards {
     templateBoards = append(templateBoards , TrelloBoard{board.Id, board.Name})
@@ -95,19 +83,13 @@ func CreateTrelloBoardsModel(clientStateUseTrelloBoardId string, actionUseTrello
   return
 }
 
-// FIXME: Currently this function crash on now.
-// See https://github.com/zeit/now-builders/issues/564
 func GenerateForTrelloLists(clientStateAddCardName string, clientStateAddCardIdInListId string, actionAddCard string, lists []trello.List, actionDeleteCard string, boardId string, clientStateUpdateCardInListId string, actionMoveCardToList string) (tmpl *template.Template, model TrelloLists) {
-  tmpl = template.Must(template.ParseFiles("../trelloLists.html"))
-  model = CreateTrelloListsModel(clientStateAddCardName, clientStateAddCardIdInListId, actionAddCard, lists, actionDeleteCard, boardId, clientStateUpdateCardInListId, actionMoveCardToList)
+  tmpl = template.Must(template.ParseFiles("web/template/trelloLists.html"))
+  model = createTrelloListsModel(clientStateAddCardName, clientStateAddCardIdInListId, actionAddCard, lists, actionDeleteCard, boardId, clientStateUpdateCardInListId, actionMoveCardToList)
   return
 }
 
-// TODO: Inline me in GenerateForTrelloLists
-// as soon the issue is fixed.
-// Currently its only available
-// to "don't break the API" from the `index.go`
-func CreateTrelloListsModel(clientStateAddCardName string, clientStateAddCardIdInListId string, actionAddCard string, lists []trello.List, actionDeleteCard string, boardId string, clientStateUpdateCardInListId string, actionMoveCardToList string) (model TrelloLists) {
+func createTrelloListsModel(clientStateAddCardName string, clientStateAddCardIdInListId string, actionAddCard string, lists []trello.List, actionDeleteCard string, boardId string, clientStateUpdateCardInListId string, actionMoveCardToList string) (model TrelloLists) {
   templateList := []TrelloList{}
   for _, list := range lists {
     templateCard := []TrelloCard{}
