@@ -53,6 +53,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
   configurationId := payload.ConfigurationId
   token := payload.Token
   metadata := getMetadata(configurationId, token)
+  trelloClient := trello.NewClient(metadata.AuthKey)
 
   header := w.Header()
   header.Add("Access-Control-Allow-Origin", "*")
@@ -66,7 +67,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
   }
 
   if (action == ACTION_VIEW && metadata.AuthKey != "") {
-    boards := trello.GetBoardsByUsername(metadata.AuthKey, metadata.Username)
+    boards := trelloClient.GetBoardsByUsername(metadata.Username)
     tmpl, model := templateutil.GenerateForTrelloBoards(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
     tmpl.Execute(w, model)
     return
@@ -80,7 +81,7 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     // Save the authKey
     var jsonStr = "{\"authKey\":\"" + authKey + "\", \"username\":\"" + username + "\"}"
     saveMetadata(configurationId, token, jsonStr)
-    boards := trello.GetBoardsByUsername(authKey, username)
+    boards := trelloClient.GetBoardsByUsername(username)
     tmpl, model := templateutil.GenerateForTrelloBoards(CLIENT_STATE_USE_TRELLO_BOARD_ID, ACTION_USE_TRELLO_BOARD, boards, CLIENT_STATE_TRELLO_BOARD_NAME)
     tmpl.Execute(w, model)
     return
@@ -92,14 +93,14 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
       // This is just a check if this is really a string...
       // see https://stackoverflow.com/a/14289568
       boardName, _ := clientState[CLIENT_STATE_TRELLO_BOARD_NAME].(string)
-      board := trello.CreateNewBoard(metadata.AuthKey, boardName)
+      board := trelloClient.CreateNewBoard(boardName)
       boardId = board.Id
     } else {
       // This is just a check if this is really a string...
       // see https://stackoverflow.com/a/14289568
       boardId, _ = clientState[CLIENT_STATE_USE_TRELLO_BOARD_ID].(string)
     }
-    lists := trello.GetListsFromBoardId(metadata.AuthKey, boardId)
+    lists := trelloClient.GetListsFromBoardId(boardId)
     tmpl, model := templateutil.GenerateForTrelloLists(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, boardId, CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
     tmpl.Execute(w, model)
     return
@@ -108,8 +109,8 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
   if (action == ACTION_MOVE_CARD_TO_LIST && metadata.AuthKey != "") {
     boardCardListId, _ := clientState[CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID].(string)
     ids := strings.Split(boardCardListId, "_")
-    trello.MoveCardToList(metadata.AuthKey, ids[1], ids[2])
-    lists := trello.GetListsFromBoardId(metadata.AuthKey, ids[0])
+    trelloClient.MoveCardToList(ids[1], ids[2])
+    lists := trelloClient.GetListsFromBoardId(ids[0])
     tmpl, model := templateutil.GenerateForTrelloLists(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, ids[0], CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
     tmpl.Execute(w, model)
     return
@@ -117,8 +118,8 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
 
   if (strings.HasPrefix(action, ACTION_DELETE_CARD) && metadata.AuthKey != "") {
     ids := strings.Split(action, "_")
-    trello.DeleteCard(metadata.AuthKey, ids[2])
-    lists := trello.GetListsFromBoardId(metadata.AuthKey, ids[1])
+    trelloClient.DeleteCard(ids[2])
+    lists := trelloClient.GetListsFromBoardId(ids[1])
     tmpl, model := templateutil.GenerateForTrelloLists(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, ids[1], CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
     tmpl.Execute(w, model)
     return
@@ -128,8 +129,8 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
     boardListId, _ := clientState[CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID].(string)
     ids := strings.Split(boardListId, "_")
     cardName, _ := clientState[CLIENT_STATE_ADD_CARD_NAME].(string)
-    trello.AddCard(metadata.AuthKey, cardName, ids[1])
-    lists := trello.GetListsFromBoardId(metadata.AuthKey, ids[0])
+    trelloClient.AddCard(cardName, ids[1])
+    lists := trelloClient.GetListsFromBoardId(ids[0])
     tmpl, model := templateutil.GenerateForTrelloLists(CLIENT_STATE_ADD_CARD_NAME, CLIENT_STATE_ADD_CARD_ID_IN_LIST_ID, ACTION_ADD_CARD, lists, ACTION_DELETE_CARD, ids[0], CLIENT_STATE_UPDATE_CARD_ID_IN_LIST_ID, ACTION_MOVE_CARD_TO_LIST)
     tmpl.Execute(w, model)
     return
