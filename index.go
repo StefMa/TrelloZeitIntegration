@@ -1,4 +1,4 @@
-package treit
+package TrelloZeitIntegration
 
 import(
   "net/http"
@@ -6,8 +6,8 @@ import(
   "encoding/json"
   "bytes"
   "strings"
-  "treit/api/trello"
-  "treit/web/template/templateutil"
+  "github.com/stefma/TrelloZeitIntegration/api/trello"
+  "github.com/stefma/TrelloZeitIntegration/web/template/templateutil"
 )
 
 type payload struct {

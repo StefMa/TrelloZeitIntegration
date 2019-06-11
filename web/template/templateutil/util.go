@@ -3,7 +3,7 @@ package templateutil
 import(
   "os"
   "html/template"
-  "treit/api/trello"
+  "github.com/stefma/TrelloZeitIntegration/api/trello"
 )
 
 func GenerateForSetup(clientStateAuthKey string, linkForAuthKey string, clientStateTrelloUserName string, actionFinishSetup string) (tmpl *template.Template, model Setup) {
