@@ -1,0 +1,11 @@
+<Page>
+  <H2>Setup</H2>
+  <Container>
+    <Input name="{{.ClientStateAuthKey}}" label="Auth Key"/>
+    <Link href="{{.LinkForAuthKey}}" target="_blank">Get Auth key</Link>
+  </Container>
+  <Container>
+    <Input name="{{.ClientStateTrelloUsername}}" label="Username"/>
+  </Container>
+  <Button action="{{.ActionFinishSetup}}">Finish setup</Button>
+</Page>

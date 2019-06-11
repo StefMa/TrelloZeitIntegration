@@ -1,4 +1,17 @@
 {
   "version": 2,
-  "builds": [{ "src": "index.go", "use": "@now/go" }]
+  "builds": [
+    {
+      "src": "index.go",
+      "use": "@now/go",
+      "config": {
+        "includeFiles": [
+          "web/template/*"
+        ]
+      }
+    }
+  ],
+  "env": {
+    "TEMPLATES_LOCATION_DIR": "web/template/"
+  }
 }
