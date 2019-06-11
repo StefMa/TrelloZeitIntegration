@@ -10,5 +10,8 @@
         ]
       }
     }
-  ]
+  ],
+  "env": {
+    "TEMPLATES_LOCATION_DIR": "web/template/"
+  }
 }

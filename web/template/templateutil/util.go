@@ -1,6 +1,7 @@
 package templateutil
 
 import(
+  "os"
   "html/template"
   "treit/api/trello"
 )
@@ -48,7 +49,7 @@ type TrelloCard struct {
 }
 
 func GenerateForSetup(clientStateAuthKey string, linkForAuthKey string, clientStateTrelloUserName string, actionFinishSetup string) (tmpl *template.Template, model Setup) {
-  tmpl = template.Must(template.ParseFiles("web/template/setup.html"))
+  tmpl = templateWithName("setup.html")
   model = createSetupModel(clientStateAuthKey, linkForAuthKey, clientStateTrelloUserName, actionFinishSetup)
   return
 }
@@ -64,7 +65,7 @@ func createSetupModel(clientStateAuthKey string, linkForAuthKey string, clientSt
 }
 
 func GenerateForTrelloBoards(clientStateUseTrelloBoardId string, actionUseTrelloBoard string, boards []trello.Board, clientStateTrelloBoardName string) (tmpl *template.Template, model TrelloBoards) {
-  tmpl = template.Must(template.ParseFiles("web/template/trelloBoards.html"))
+  tmpl = templateWithName("trelloBoards.html")
   model = createTrelloBoardsModel(clientStateUseTrelloBoardId, actionUseTrelloBoard, boards, clientStateTrelloBoardName)
   return
 }
@@ -84,7 +85,7 @@ func createTrelloBoardsModel(clientStateUseTrelloBoardId string, actionUseTrello
 }
 
 func GenerateForTrelloLists(clientStateAddCardName string, clientStateAddCardIdInListId string, actionAddCard string, lists []trello.List, actionDeleteCard string, boardId string, clientStateUpdateCardInListId string, actionMoveCardToList string) (tmpl *template.Template, model TrelloLists) {
-  tmpl = template.Must(template.ParseFiles("web/template/trelloLists.html"))
+  tmpl = templateWithName("trelloLists.html")
   model = createTrelloListsModel(clientStateAddCardName, clientStateAddCardIdInListId, actionAddCard, lists, actionDeleteCard, boardId, clientStateUpdateCardInListId, actionMoveCardToList)
   return
 }
@@ -109,4 +110,9 @@ func createTrelloListsModel(clientStateAddCardName string, clientStateAddCardIdI
     ActionMoveCardToList: actionMoveCardToList,
   }
   return
+}
+
+func templateWithName(name string) (*template.Template) {
+  templateLocationDir := os.Getenv("TEMPLATES_LOCATION_DIR")
+  return template.Must(template.ParseFiles(templateLocationDir + name))
 }
