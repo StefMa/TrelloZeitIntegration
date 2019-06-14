@@ -10,3 +10,15 @@ Zeit Integration and a little bit with the Trello API.
 * Run `now`
 
 Now you should be able to use the deployment as your Zeit Integration UIHook
+
+## Development setup
+
+### Automatic gofmt
+
+I have added a [pre-commit](.githooks/pre-commit) to automatically
+format the Go code for each changed file with `gofmt`.
+
+To enable it simply run the following command:
+```
+git config core.hooksPath .githooks
+```
