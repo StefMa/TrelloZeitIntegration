@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Find all changed and tracked Go files
+gofiles=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$')
+[ -z "$gofiles" ] && exit 0
+
+# Find all the unformatted Go files
+unformatted=$(gofmt -l $gofiles)
+[ -z "$unformatted" ] && exit 0
+
+# Will format your unformatted and changed(!) Go files with `gofmt -w $unformatted`
+gofmt -w $unformatted
+
+# Will add the formatted files to the commit
+git add $unformatted
